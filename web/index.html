@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#f3f0e7" />
+    <script>
+      ;(() => {
+        try {
+          const saved = localStorage.getItem('canteiro.theme')
+          const dark =
+            saved === 'dark' ||
+            ((!saved || saved === 'system') &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches)
+          document.documentElement.classList.toggle('dark', dark)
+          document.documentElement.style.colorScheme = dark ? 'dark' : 'light'
+          document
+            .querySelector('meta[name="theme-color"]')
+            ?.setAttribute('content', dark ? '#151610' : '#f3f0e7')
+        } catch {
+          /* preferência indisponível */
+        }
+      })()
+    </script>
+    <meta
+      name="description"
+      content="Canteiro — gestão de locação de andaimes e ferramentas para construção civil: catálogo, montador de kits e timeline de disponibilidade."
+    />
+    <title>Canteiro · locação de andaimes e ferramentas</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

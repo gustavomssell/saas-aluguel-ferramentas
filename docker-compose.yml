@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: canteiro-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: canteiro
+      POSTGRES_PASSWORD: canteiro
+      POSTGRES_DB: canteiro
+    ports:
+      - "5439:5432"
+    volumes:
+      - canteiro-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U canteiro -d canteiro"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  canteiro-data:

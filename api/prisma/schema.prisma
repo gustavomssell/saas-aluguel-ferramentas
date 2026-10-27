@@ -1,0 +1,342 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  OPERATOR
+}
+
+enum RentalStatus {
+  QUOTED
+  ACTIVE
+  RETURN_PENDING
+  RETURNED
+  CANCELLED
+}
+
+enum RentalEventType {
+  CREATED
+  EXTENDED
+  ACTIVATED
+  RETURN_PENDING
+  RETURNED
+  CANCELLED
+}
+
+enum ChargeKind {
+  RENT
+  DEPOSIT
+  LATE_FEE
+  DAMAGE
+  OTHER
+}
+
+enum ChargeStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
+
+enum InspectionKind {
+  DELIVERY
+  RETURN
+}
+
+enum StockMovementKind {
+  ADJUSTMENT
+  MAINTENANCE
+}
+
+model Organization {
+  id         String   @id @default(cuid())
+  name       String
+  slug       String   @unique
+  document   String?
+  phone      String?
+  email      String?
+  city       String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  memberships Membership[]
+  categories  Category[]
+  equipments  Equipment[]
+  kits        Kit[]
+  customers   Customer[]
+  rentals     Rental[]
+  charges     Charge[]
+  invites     Invite[]
+  stockMovements StockMovement[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  memberships Membership[]
+  invitesSent Invite[]
+  stockMovements StockMovement[]
+}
+
+model Membership {
+  id        String   @id @default(cuid())
+  role      Role     @default(OPERATOR)
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orgId  String
+  org    Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, orgId])
+  @@index([orgId])
+}
+
+model Category {
+  id        String @id @default(cuid())
+  name      String
+  slug      String
+  createdAt DateTime @default(now())
+
+  orgId String
+  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  equipments Equipment[]
+
+  @@unique([orgId, slug])
+}
+
+model Invite {
+  id         String    @id @default(cuid())
+  email      String
+  role       Role      @default(OPERATOR)
+  expiresAt  DateTime
+  acceptedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  orgId String
+  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  invitedById String
+  invitedBy   User   @relation(fields: [invitedById], references: [id], onDelete: Cascade)
+
+  @@index([orgId, email])
+  @@index([email, acceptedAt])
+}
+
+model Equipment {
+  id               String   @id @default(cuid())
+  code             String
+  name             String
+  description      String?
+  brand            String?
+  unit             String   @default("un")
+  weightKg         Float?
+  dailyRate        Float    @default(0)
+  weeklyRate       Float?
+  monthlyRate      Float?
+  replacementValue Float    @default(0)
+  stockTotal       Int      @default(0)
+  stockMaintenance Int      @default(0)
+  imageUrl         String?
+  active           Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  orgId      String
+  org        Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  categoryId String
+  category   Category     @relation(fields: [categoryId], references: [id])
+
+  kitItems    KitItem[]
+  rentalItems RentalItem[]
+  inspectionItems RentalInspectionItem[]
+  stockMovements StockMovement[]
+
+  @@unique([orgId, code])
+  @@index([orgId, categoryId])
+}
+
+model Kit {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  heightMeters  Float?
+  facadeMeters  Float?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  orgId String
+  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  items KitItem[]
+}
+
+model KitItem {
+  id          String @id @default(cuid())
+  quantity    Int
+  kitId       String
+  kit         Kit       @relation(fields: [kitId], references: [id], onDelete: Cascade)
+  equipmentId String
+  equipment   Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+
+  @@unique([kitId, equipmentId])
+}
+
+model Customer {
+  id          String   @id @default(cuid())
+  name        String
+  document    String?
+  contactName String?
+  phone       String?
+  email       String?
+  siteAddress String?
+  city        String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  orgId   String
+  org     Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  rentals Rental[]
+  charges Charge[]
+
+  @@index([orgId])
+}
+
+model Rental {
+  id               String       @id @default(cuid())
+  code             String
+  status           RentalStatus @default(QUOTED)
+  startsAt         DateTime
+  expectedReturnAt DateTime
+  returnedAt       DateTime?
+  depositAmount    Float        @default(0)
+  siteName         String?
+  notes            String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  orgId      String
+  org        Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  customerId String
+  customer   Customer     @relation(fields: [customerId], references: [id])
+
+  items   RentalItem[]
+  events  RentalEvent[]
+  charges Charge[]
+  inspections RentalInspection[]
+
+  @@unique([orgId, code])
+  @@index([orgId, status])
+  @@index([orgId, startsAt])
+}
+
+model RentalItem {
+  id        String @id @default(cuid())
+  quantity  Int
+  dailyRate Float
+  rentalId  String
+  rental    Rental    @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+  equipmentId String
+  equipment Equipment @relation(fields: [equipmentId], references: [id])
+
+  @@unique([rentalId, equipmentId])
+}
+
+model RentalEvent {
+  id        String          @id @default(cuid())
+  type      RentalEventType
+  message   String
+  createdAt DateTime        @default(now())
+  rentalId  String
+  rental    Rental          @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+
+  @@index([rentalId])
+}
+
+model Charge {
+  id          String       @id @default(cuid())
+  kind        ChargeKind   @default(RENT)
+  status      ChargeStatus @default(PENDING)
+  description String?
+  amount      Float
+  dueDate     DateTime
+  paidAt      DateTime?
+  method      String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  orgId      String
+  org        Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  customerId String
+  customer   Customer     @relation(fields: [customerId], references: [id])
+  rentalId   String?
+  rental     Rental?      @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, status, dueDate])
+  @@index([rentalId])
+  @@index([orgId, customerId])
+}
+
+model RentalInspection {
+  id        String         @id @default(cuid())
+  kind      InspectionKind
+  checkedAt DateTime       @default(now())
+  notes     String?
+  createdAt DateTime       @default(now())
+
+  rentalId String
+  rental   Rental @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+
+  items RentalInspectionItem[]
+
+  @@index([rentalId, kind])
+}
+
+model RentalInspectionItem {
+  id               String @id @default(cuid())
+  quantityExpected Int
+  quantityChecked  Int
+  damaged          Int    @default(0)
+  missing          Int    @default(0)
+  notes            String?
+
+  inspectionId String
+  inspection   RentalInspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+  equipmentId  String
+  equipment    Equipment        @relation(fields: [equipmentId], references: [id])
+
+  @@index([inspectionId])
+}
+
+model StockMovement {
+  id        String            @id @default(cuid())
+  kind      StockMovementKind
+  delta     Int
+  balance   Int
+  note      String
+  createdAt DateTime          @default(now())
+
+  orgId String
+  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  equipmentId String
+  equipment   Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+
+  createdById String?
+  createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([orgId, createdAt])
+  @@index([equipmentId, createdAt])
+}
+

@@ -1,6 +1,6 @@
 # Contribuindo
 
-Este repositório segue **GitFlow** e **Conventional Commits**. Nada entra direto em `main` ou `develop` fora de release ou hotfix.
+Este repositório segue **GitFlow** e **Conventional Commits**. Nada entra direto em `main` ou `develop` fora de release ou hotfix. Exceção única: o commit inicial de bootstrap do repositório, que só existe para criar o histórico das branches.
 
 ## 1. Preparar o ambiente
 
@@ -14,6 +14,8 @@ npm run db:seed
 ```
 
 Nunca versione `api/.env`. Ele está no `.gitignore`; use o `.env.example` como modelo.
+
+O `.gitattributes` normaliza arquivos de texto para LF no repositório. Em Windows, mantenha a conversão automática do Git ativa.
 
 ## 2. Verificação antes de qualquer commit
 
@@ -32,6 +34,9 @@ Os três comandos precisam passar antes de abrir pull request.
 | `main` | Produção, sempre liberável | `release/*` ou `hotfix/*` | — |
 | `develop` | Integração contínua | `feature/*`, `release/*`, `hotfix/*` | `release/*` |
 | `feature/*` | Nova funcionalidade ou melhoria | `develop` | `develop` |
+| `fix/*` | Correção de bug em desenvolvimento | `develop` | `develop` |
+| `chore/*` | Infra, CI, ferramentas e documentação | `develop` | `develop` |
+| `docs/*` | Somente documentação | `develop` | `develop` |
 | `release/*` | Estabilização e changelog de versão | `develop` | `main` e `develop` |
 | `hotfix/*` | Correção urgente em produção | `main` | `main` e `develop` |
 
@@ -41,6 +46,8 @@ Nomeação de branches:
 | --- | --- | --- |
 | Feature | `feature/<slug-curto>` | `feature/montador-kits-pdf` |
 | Bugfix | `feature/fix-<slug>` ou `fix/<slug>` | `fix/timeline-data-futura` |
+| Documentação | `docs/<slug-curto>` | `docs/arquitetura-api` |
+| Infra/CI | `chore/<slug-curto>` | `chore/ci-melhorias` |
 | Release | `release/vX.Y.Z` | `release/v1.2.0` |
 | Hotfix | `hotfix/vX.Y.Z` | `hotfix/v1.2.1` |
 

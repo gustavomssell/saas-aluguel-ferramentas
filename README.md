@@ -228,6 +228,7 @@ O repositório segue GitFlow com Conventional Commits. O guia completo está em 
 | `main` | Produção | `release/*` ou `hotfix/*` | — |
 | `develop` | Integração | `feature/*`, `release/*`, `hotfix/*` | `release/*` |
 | `feature/*` | Funcionalidade | `develop` | `develop` |
+| `fix/*`, `docs/*`, `chore/*` | Correção, documentação e infra | `develop` | `develop` |
 | `release/*` | Preparação de versão | `develop` | `main` e `develop` |
 | `hotfix/*` | Correção urgente | `main` | `main` e `develop` |
 
